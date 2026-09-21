@@ -13,8 +13,8 @@ import { z } from "zod"
 describe("Config Schema - PICNIC_COUNTRY_CODE (Issue #10 regression)", () => {
   // Create a standalone config schema for testing (matches the actual implementation)
   const configSchema = z.object({
-    PICNIC_USERNAME: z.string(),
-    PICNIC_PASSWORD: z.string(),
+    PICNIC_USERNAME: z.string().optional(),
+    PICNIC_PASSWORD: z.string().optional(),
     PICNIC_COUNTRY_CODE: z.enum(["NL", "DE"]).default("NL"),
     ENABLE_HTTP_SERVER: z
       .string()
@@ -139,22 +139,8 @@ describe("Config Schema - PICNIC_COUNTRY_CODE (Issue #10 regression)", () => {
   })
 
   describe("Required fields validation", () => {
-    it("should require PICNIC_USERNAME", () => {
-      expect(() => {
-        configSchema.parse({
-          PICNIC_PASSWORD: "test-pass",
-          PICNIC_COUNTRY_CODE: "NL",
-        })
-      }).toThrow()
-    })
-
-    it("should require PICNIC_PASSWORD", () => {
-      expect(() => {
-        configSchema.parse({
-          PICNIC_USERNAME: "test-user",
-          PICNIC_COUNTRY_CODE: "NL",
-        })
-      }).toThrow()
+    it("should allow PICNIC_USERNAME and PICNIC_PASSWORD to be omitted", () => {
+      expect(() => configSchema.parse({ PICNIC_COUNTRY_CODE: "DE" })).not.toThrow()
     })
 
     it("should not require PICNIC_COUNTRY_CODE due to default", () => {

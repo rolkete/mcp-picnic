@@ -13,6 +13,13 @@ vi.mock("fs/promises", () => ({
 // Mock picnic-api (v4 domain-based structure)
 const mockLogin = vi.fn()
 const mockGetCart = vi.fn()
+const mockConfig: Record<string, unknown> = {
+  PICNIC_USERNAME: "test-user",
+  PICNIC_PASSWORD: "test-pass",
+  PICNIC_COUNTRY_CODE: "NL",
+  PICNIC_SESSION_FILE: "picnic-session.json",
+  PICNIC_DEVICE_FILE: "picnic-device.json",
+}
 vi.mock("picnic-api", () => {
   return {
     default: vi.fn().mockImplementation((opts: any) => ({
@@ -27,15 +34,7 @@ vi.mock("picnic-api", () => {
 })
 
 // Mock config
-vi.mock("../../../src/config.js", () => ({
-  config: {
-    PICNIC_USERNAME: "test-user",
-    PICNIC_PASSWORD: "test-pass",
-    PICNIC_COUNTRY_CODE: "NL",
-    PICNIC_SESSION_FILE: "picnic-session.json",
-    PICNIC_DEVICE_FILE: "picnic-device.json",
-  },
-}))
+vi.mock("../../../src/config.js", () => ({ config: mockConfig }))
 
 describe("picnic-client session persistence", () => {
   beforeEach(async () => {
@@ -43,6 +42,8 @@ describe("picnic-client session persistence", () => {
     vi.unstubAllGlobals()
     // Reset the module to clear the singleton between tests
     vi.resetModules()
+    mockConfig.PICNIC_USERNAME = "test-user"
+    mockConfig.PICNIC_PASSWORD = "test-pass"
   })
 
   async function importClient() {
@@ -61,6 +62,43 @@ describe("picnic-client session persistence", () => {
       expect(fs.readFile).toHaveBeenCalledWith("picnic-session.json", "utf-8")
       expect(mockGetCart).toHaveBeenCalled()
       expect(mockLogin).not.toHaveBeenCalled()
+    })
+
+    it("should reuse a valid session without configured credentials", async () => {
+      mockConfig.PICNIC_USERNAME = undefined
+      mockConfig.PICNIC_PASSWORD = undefined
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ authKey: "saved-secret-key" }))
+      mockGetCart.mockResolvedValue({ user: "info" })
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
+      const { initializePicnicClient } = await importClient()
+      await expect(initializePicnicClient()).resolves.toBeUndefined()
+
+      expect(mockLogin).not.toHaveBeenCalled()
+      expect(consoleSpy.mock.calls.flat().join(" ")).not.toContain("saved-secret-key")
+    })
+
+    it("should fail clearly without a session or credentials", async () => {
+      mockConfig.PICNIC_USERNAME = undefined
+      mockConfig.PICNIC_PASSWORD = undefined
+      vi.mocked(fs.readFile).mockRejectedValue(new Error("ENOENT"))
+
+      const { initializePicnicClient } = await importClient()
+      await expect(initializePicnicClient()).rejects.toThrow("A valid Picnic session is required")
+      expect(mockLogin).not.toHaveBeenCalled()
+    })
+
+    it("should fail safely for an expired session without credentials", async () => {
+      mockConfig.PICNIC_USERNAME = undefined
+      mockConfig.PICNIC_PASSWORD = undefined
+      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ authKey: "expired-secret-key" }))
+      mockGetCart.mockRejectedValue(new Error("Unauthorized"))
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
+      const { initializePicnicClient } = await importClient()
+      await expect(initializePicnicClient()).rejects.toThrow("A valid Picnic session is required")
+      expect(mockLogin).not.toHaveBeenCalled()
+      expect(consoleSpy.mock.calls.flat().join(" ")).not.toContain("expired-secret-key")
     })
 
     it("should fall back to login when saved session is invalid", async () => {
@@ -99,6 +137,7 @@ describe("picnic-client session persistence", () => {
       expect(fs.writeFile).toHaveBeenCalledWith(
         "picnic-session.json",
         expect.stringContaining("authKey"),
+        { mode: 0o600 },
       )
     })
 

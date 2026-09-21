@@ -79,7 +79,7 @@ export async function saveSession(): Promise<void> {
   if (!picnicClientInstance) return
   const authKey = picnicClientInstance.authKey
   if (authKey) {
-    await fs.writeFile(config.PICNIC_SESSION_FILE, JSON.stringify({ authKey }))
+    await fs.writeFile(config.PICNIC_SESSION_FILE, JSON.stringify({ authKey }), { mode: 0o600 })
   }
 }
 
@@ -165,9 +165,15 @@ export async function initializePicnicClient(
       console.error("Successfully reused saved session.")
       return
     } catch {
-      console.error("Saved session invalid, performing fresh login...")
+      console.error("Saved Picnic session is invalid or expired.")
       client.authKey = null // Clear invalid key before login
     }
+  }
+
+  if (!loginUsername || !loginPassword) {
+    throw new Error(
+      "A valid Picnic session is required because PICNIC_USERNAME and PICNIC_PASSWORD were intentionally not configured. Bootstrap a session once with credentials and 2FA, then reuse PICNIC_SESSION_FILE.",
+    )
   }
 
   try {

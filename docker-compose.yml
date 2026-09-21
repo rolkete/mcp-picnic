@@ -12,8 +12,10 @@ services:
       HTTP_PORT: "3000"
       HTTP_AUTH_TOKEN: ${HTTP_AUTH_TOKEN:?set this in .env}
       HTTP_AUTH_HEADER_NAME: ${HTTP_AUTH_HEADER_NAME:-x-mcp-token}
-      PICNIC_USERNAME: ${PICNIC_USERNAME:?set this in .env}
-      PICNIC_PASSWORD: ${PICNIC_PASSWORD:?set this in .env}
+      PICNIC_USERNAME: ${PICNIC_USERNAME:-}
+      PICNIC_PASSWORD: ${PICNIC_PASSWORD:-}
+      PICNIC_SESSION_FILE: ${PICNIC_SESSION_FILE:-/app/data/picnic-session.json}
+      PICNIC_SAFE_CART_ONLY: ${PICNIC_SAFE_CART_ONLY:-false}
       PICNIC_COUNTRY_CODE: ${PICNIC_COUNTRY_CODE:-NL}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

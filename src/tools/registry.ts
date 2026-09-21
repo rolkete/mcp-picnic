@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { zodToJsonSchema } from "zod-to-json-schema"
 import { ToolError, ErrorCode, ErrorUtils } from "../types/errors.js"
+import { config } from "../config.js"
+
+export type ToolSafetyCategory = "read-only" | "cart-mutation" | "external-side-effect"
 
 /**
  * MCP tool annotations. Hints for the calling model about a tool's side effects —
@@ -22,6 +25,7 @@ export interface ToolDefinition<TInput = unknown, TOutput = unknown> {
   handler: (args: TInput) => Promise<TOutput>
   prompts?: string[]
   annotations?: ToolAnnotations
+  safetyCategory: ToolSafetyCategory
 }
 
 export interface ToolResult {
@@ -70,12 +74,24 @@ interface StoredToolDefinition {
   handler: (args: unknown) => Promise<unknown>
   prompts?: string[]
   annotations?: ToolAnnotations
+  safetyCategory: ToolSafetyCategory
 }
 
-class ToolRegistry {
+export class ToolRegistry {
   private tools = new Map<string, StoredToolDefinition>()
 
+  constructor(private readonly safeCartOnly = config.PICNIC_SAFE_CART_ONLY) {}
+
   register<TInput, TOutput>(tool: ToolDefinition<TInput, TOutput>) {
+    // The registry is the security boundary. Safe mode admits only explicitly classified
+    // read operations and cart mutations, so future categories fail closed.
+    if (
+      this.safeCartOnly &&
+      tool.safetyCategory !== "read-only" &&
+      tool.safetyCategory !== "cart-mutation"
+    ) {
+      return
+    }
     this.tools.set(tool.name, tool as StoredToolDefinition)
   }
 

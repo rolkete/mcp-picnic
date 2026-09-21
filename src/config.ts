@@ -9,8 +9,8 @@ const defaultSessionFile = path.join(os.homedir(), ".picnic-session.json")
 const defaultDeviceFile = path.join(os.homedir(), ".picnic-device.json")
 
 const configSchema = z.object({
-  PICNIC_USERNAME: z.string(),
-  PICNIC_PASSWORD: z.string(),
+  PICNIC_USERNAME: z.preprocess((val) => (val === "" ? undefined : val), z.string().min(1).optional()),
+  PICNIC_PASSWORD: z.preprocess((val) => (val === "" ? undefined : val), z.string().min(1).optional()),
   PICNIC_COUNTRY_CODE: z.enum(["NL", "DE", "FR"]).default("NL"),
   PICNIC_API_VERSION: z.string().default("15"),
   PICNIC_DEVICE_ID: z.string().optional(),
@@ -28,6 +28,10 @@ const configSchema = z.object({
   HTTP_AUTH_TOKEN: z.string().optional(),
   HTTP_AUTH_HEADER_NAME: z.string().default("x-mcp-token"),
   PICNIC_SESSION_FILE: z.string().default(defaultSessionFile),
+  PICNIC_SAFE_CART_ONLY: z
+    .enum(["true", "false"])
+    .transform((val) => val === "true")
+    .default("false"),
 })
 
 export const config = configSchema.parse(process.env)

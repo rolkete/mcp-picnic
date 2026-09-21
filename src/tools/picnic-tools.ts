@@ -242,6 +242,7 @@ const searchInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_search",
+  safetyCategory: "read-only",
   description: "Search for products in Picnic with pagination and filtered results",
   inputSchema: searchInputSchema,
   handler: async (args) => {
@@ -295,6 +296,7 @@ const promotionsInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_promotions",
+  safetyCategory: "read-only",
   description:
     "Get Picnic's current weekly promotions/deals from the app's 'Alle acties' page. " +
     "Returns promoted products with current price, promotion label, original price when shown, " +
@@ -339,6 +341,7 @@ const suggestionsInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_suggestions",
+  safetyCategory: "read-only",
   description: "Get product suggestions based on a query",
   inputSchema: suggestionsInputSchema,
   handler: async (args) => {
@@ -371,6 +374,7 @@ const productDetailsInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_product_details",
+  safetyCategory: "read-only",
   description:
     "Look up product details by ID. Returns essential info by default (name, brand, price, unit, image). " +
     "Set full=true for complete details including description, allergens, ingredients, and similar products. " +
@@ -406,6 +410,7 @@ const imageInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_image",
+  safetyCategory: "read-only",
   description:
     "Get a product image by image ID and size. Returns the image itself as MCP image content.",
   inputSchema: imageInputSchema,
@@ -525,6 +530,7 @@ const getRecipeInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_recipe",
+  safetyCategory: "read-only",
   description:
     "Fetch a Picnic recipe by URL or recipe ID. Returns structured recipe data: name, " +
     "description, ingredients, preparation steps, timing, servings, image URL, saved state, " +
@@ -574,6 +580,7 @@ const recipeListInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_browse_recipes",
+  safetyCategory: "read-only",
   description:
     "Browse Picnic's recipe/cookbook overview or a specific recipe category. Returns a " +
     "paginated list of recipes (id, name, image URL, cookbook section, source URL) and " +
@@ -595,6 +602,7 @@ toolRegistry.register({
 
 toolRegistry.register({
   name: "picnic_get_saved_recipes",
+  safetyCategory: "read-only",
   description:
     "List the recipes the user has saved/favourited in their Picnic cookbook (the " +
     "'Gespeichert' tab), distinct from the public discovery feed. Returns id, name, image URL " +
@@ -611,6 +619,7 @@ toolRegistry.register({
 
 toolRegistry.register({
   name: "picnic_get_own_recipes",
+  safetyCategory: "read-only",
   description:
     "List the user's own recipes (the cookbook 'Eigene Rezepte' tab — user-created recipes). " +
     "Returns id, name, image URL and source URL.",
@@ -634,6 +643,7 @@ const recipeRefInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_save_recipe",
+  safetyCategory: "external-side-effect",
   description: "Save a recipe to the user's Picnic cookbook, by URL or recipe ID.",
   inputSchema: recipeRefInputSchema,
   handler: async (args) => {
@@ -652,6 +662,7 @@ toolRegistry.register({
 
 toolRegistry.register({
   name: "picnic_unsave_recipe",
+  safetyCategory: "external-side-effect",
   description: "Remove a recipe from the user's Picnic cookbook, by URL or recipe ID.",
   inputSchema: recipeRefInputSchema,
   handler: async (args) => {
@@ -683,6 +694,7 @@ const addRecipeToCartInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_add_recipe_to_cart",
+  safetyCategory: "cart-mutation",
   description:
     "Add a recipe's ingredients to the shopping cart by assigning the recipe (selling group) " +
     "to the basket. Optionally set the number of portions. If this fails, call picnic_get_cart " +
@@ -709,6 +721,7 @@ toolRegistry.register({
 // Remove a recipe's ingredients from the basket (inverse of add_recipe_to_cart).
 toolRegistry.register({
   name: "picnic_remove_recipe_from_cart",
+  safetyCategory: "cart-mutation",
   description:
     "Remove a recipe (selling group) from the basket, undoing picnic_add_recipe_to_cart. " +
     "Removes only that recipe's ingredients, leaving the rest of the cart untouched.",
@@ -760,6 +773,7 @@ function getErrorMessage(error: unknown): string {
 
 toolRegistry.register({
   name: "picnic_get_recipe_ingredients",
+  safetyCategory: "read-only",
   description:
     "Fetch structured Picnic recipe ingredients by recipe URL or ID. Returns selling-unit IDs, " +
     "quantities, pantry flags, package display text, and prices for meal planning.",
@@ -772,6 +786,7 @@ toolRegistry.register({
 
 toolRegistry.register({
   name: "picnic_get_multiple_recipe_ingredients",
+  safetyCategory: "read-only",
   description:
     "Fetch structured ingredient lists for multiple Picnic recipes. Returns successful recipes " +
     "and per-input errors so one unavailable recipe does not discard the whole batch.",
@@ -819,6 +834,7 @@ const structuredRecipeIngredientsSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_build_shopping_list",
+  safetyCategory: "read-only",
   description:
     "Consolidate structured recipe ingredients into a shopping list. Skips pantry items, " +
     "deduplicates products per recipe, and totals priceCents times quantity.",
@@ -830,6 +846,7 @@ toolRegistry.register({
 
 toolRegistry.register({
   name: "picnic_find_meal_combinations",
+  safetyCategory: "read-only",
   description:
     "Rank combinations of structured Picnic recipes by shared non-pantry ingredients, " +
     "using the same conservative cost calculation as picnic_build_shopping_list.",
@@ -856,6 +873,7 @@ toolRegistry.register({
 // Get shopping cart tool
 toolRegistry.register({
   name: "picnic_get_cart",
+  safetyCategory: "read-only",
   description: "Get the current shopping cart contents with filtered data",
   inputSchema: z.object({}),
   handler: async () => {
@@ -874,6 +892,7 @@ const addToCartInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_add_to_cart",
+  safetyCategory: "cart-mutation",
   description:
     "Add a product to the shopping cart. Not idempotent: each call adds another `count` " +
     "items. If this fails, call picnic_get_cart to check whether the add landed before retrying.",
@@ -900,6 +919,7 @@ const removeFromCartInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_remove_from_cart",
+  safetyCategory: "cart-mutation",
   description:
     "Remove a product from the shopping cart. Not idempotent: each call removes another " +
     "`count` items. If this fails, call picnic_get_cart to check whether the removal landed " +
@@ -922,6 +942,7 @@ toolRegistry.register({
 // Clear cart tool
 toolRegistry.register({
   name: "picnic_clear_cart",
+  safetyCategory: "cart-mutation",
   description: "Clear all items from the shopping cart",
   inputSchema: z.object({}),
   annotations: CART_MUTATION_ANNOTATIONS,
@@ -939,6 +960,7 @@ toolRegistry.register({
 // Get delivery slots tool
 toolRegistry.register({
   name: "picnic_get_delivery_slots",
+  safetyCategory: "read-only",
   description: "Get available delivery time slots",
   inputSchema: z.object({}),
   handler: async () => {
@@ -956,6 +978,7 @@ const setDeliverySlotInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_set_delivery_slot",
+  safetyCategory: "external-side-effect",
   description: "Select a delivery time slot",
   inputSchema: setDeliverySlotInputSchema,
   handler: async (args) => {
@@ -988,6 +1011,7 @@ const deliveriesInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_deliveries",
+  safetyCategory: "read-only",
   description: "Get past and current deliveries with pagination",
   inputSchema: deliveriesInputSchema,
   handler: async (args) => {
@@ -1020,6 +1044,7 @@ const deliveryInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_delivery",
+  safetyCategory: "read-only",
   description: "Get details of a specific delivery",
   inputSchema: deliveryInputSchema,
   handler: async (args) => {
@@ -1033,6 +1058,7 @@ toolRegistry.register({
 // Get delivery position tool
 toolRegistry.register({
   name: "picnic_get_delivery_position",
+  safetyCategory: "read-only",
   description: "Get real-time position data for a delivery",
   inputSchema: deliveryInputSchema,
   handler: async (args) => {
@@ -1046,6 +1072,7 @@ toolRegistry.register({
 // Get delivery scenario tool
 toolRegistry.register({
   name: "picnic_get_delivery_scenario",
+  safetyCategory: "read-only",
   description: "Get driver and route information for a delivery",
   inputSchema: deliveryInputSchema,
   handler: async (args) => {
@@ -1059,6 +1086,7 @@ toolRegistry.register({
 // Cancel delivery tool
 toolRegistry.register({
   name: "picnic_cancel_delivery",
+  safetyCategory: "external-side-effect",
   description: "Cancel a delivery order",
   inputSchema: deliveryInputSchema,
   handler: async (args) => {
@@ -1081,6 +1109,7 @@ const rateDeliveryInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_rate_delivery",
+  safetyCategory: "external-side-effect",
   description: "Rate a completed delivery",
   inputSchema: rateDeliveryInputSchema,
   handler: async (args) => {
@@ -1102,6 +1131,7 @@ const sendInvoiceEmailInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_send_delivery_invoice_email",
+  safetyCategory: "external-side-effect",
   description: "Send or resend the invoice email for a completed delivery",
   inputSchema: sendInvoiceEmailInputSchema,
   handler: async (args) => {
@@ -1123,6 +1153,7 @@ const orderStatusInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_order_status",
+  safetyCategory: "read-only",
   description: "Get the status of a specific order",
   inputSchema: orderStatusInputSchema,
   handler: async (args) => {
@@ -1136,6 +1167,7 @@ toolRegistry.register({
 // Get user details tool
 toolRegistry.register({
   name: "picnic_get_user_details",
+  safetyCategory: "read-only",
   description: "Get details of the current logged-in user",
   inputSchema: z.object({}),
   handler: async () => {
@@ -1149,6 +1181,7 @@ toolRegistry.register({
 // Get user info tool
 toolRegistry.register({
   name: "picnic_get_user_info",
+  safetyCategory: "read-only",
   description: "Get user information including toggled features",
   inputSchema: z.object({}),
   handler: async () => {
@@ -1162,6 +1195,7 @@ toolRegistry.register({
 // Get payment profile tool
 toolRegistry.register({
   name: "picnic_get_payment_profile",
+  safetyCategory: "read-only",
   description: "Get payment information and profile",
   inputSchema: z.object({}),
   handler: async () => {
@@ -1179,6 +1213,7 @@ const walletTransactionsInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_wallet_transactions",
+  safetyCategory: "read-only",
   description: "Get wallet transaction history",
   inputSchema: walletTransactionsInputSchema,
   handler: async (args) => {
@@ -1200,6 +1235,7 @@ const walletTransactionDetailsInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_get_wallet_transaction_details",
+  safetyCategory: "read-only",
   description: "Get detailed information about a specific wallet transaction",
   inputSchema: walletTransactionDetailsInputSchema,
   handler: async (args) => {
@@ -1217,6 +1253,7 @@ const generate2FAInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_generate_2fa_code",
+  safetyCategory: "external-side-effect",
   description: "Generate a 2FA code for verification",
   inputSchema: generate2FAInputSchema,
   handler: async (args) => {
@@ -1250,6 +1287,7 @@ const verify2FAInputSchema = z.object({
 
 toolRegistry.register({
   name: "picnic_verify_2fa_code",
+  safetyCategory: "external-side-effect",
   description: "Verify a 2FA code",
   inputSchema: verify2FAInputSchema,
   handler: async (args) => {
@@ -1257,9 +1295,6 @@ toolRegistry.register({
     await verifyPicnic2FACode(args.code)
     await saveSession()
 
-    return {
-      message: "2FA code verified",
-      code: args.code,
-    }
+    return { message: "2FA code verified" }
   },
 })

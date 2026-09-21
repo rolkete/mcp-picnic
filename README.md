@@ -44,6 +44,25 @@ MCP Picnic is a bridge between AI assistants (like Claude, ChatGPT, or other MCP
 - **Recipe Recreation**: Find ingredients for specific recipes
 - **Dietary Substitutions**: Get alternatives for dietary restrictions
 
+## Recommended secure setup for Germany
+
+For day-to-day use, run from an existing session and enable the registry-level safe mode. Do not put your Picnic password in the runtime MCP configuration:
+
+```text
+PICNIC_COUNTRY_CODE=DE
+PICNIC_SESSION_FILE=/some/protected/path/picnic-session.json
+PICNIC_SAFE_CART_ONLY=true
+```
+
+`PICNIC_SESSION_FILE` contains an authentication key that behaves like a bearer secret. Keep it outside the repository, exclude it from git, set its permissions to `0600`, and never paste its contents into prompts or chat. In safe/cart-only mode, the MCP registry exposes read operations and cart mutations, but does not register delivery-slot selection, delivery cancellation, recipe/account-side mutations, 2FA mutations, checkout, ordering, or payment mutations.
+
+### One-time session bootstrap
+
+1. Configure `PICNIC_COUNTRY_CODE=DE`, the protected `PICNIC_SESSION_FILE` path, and your username/password locally in your MCP client or a private `.env` file. Set `PICNIC_SAFE_CART_ONLY=false` temporarily because the 2FA tools are deliberately unavailable in safe mode. Do not provide the password, OTP, or auth key to Codex or another assistant.
+2. Start the server. If Picnic requests 2FA, call `picnic_generate_2fa_code`, then enter the received OTP only into your trusted local MCP client for `picnic_verify_2fa_code`. The completed session is written to `PICNIC_SESSION_FILE`.
+3. Stop the server, remove `PICNIC_USERNAME` and `PICNIC_PASSWORD` from the runtime configuration, protect the session with `chmod 600 /some/protected/path/picnic-session.json`, and restart with `PICNIC_SAFE_CART_ONLY=true`.
+4. If the session expires, startup fails clearly without attempting a login. Repeat this local bootstrap process to replace it.
+
 ## How to Use
 
 ### Prerequisites

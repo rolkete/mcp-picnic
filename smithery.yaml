@@ -5,9 +5,6 @@ startCommand:
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
     type: object
-    required:
-      - picnicUsername
-      - picnicPassword
     properties:
       picnicUsername:
         type: string
@@ -20,6 +17,13 @@ startCommand:
         description: Country code for Picnic (NL or DE)
         default: "NL"
         enum: ["NL", "DE"]
+      picnicSessionFile:
+        type: string
+        description: Path to a persisted Picnic session JSON file
+      picnicSafeCartOnly:
+        type: boolean
+        description: Expose only read-only and cart mutation tools
+        default: false
       enableHttpServer:
         type: boolean
         description: Enable HTTP server mode
@@ -42,6 +46,8 @@ startCommand:
         PICNIC_USERNAME: config.picnicUsername,
         PICNIC_PASSWORD: config.picnicPassword,
         PICNIC_COUNTRY_CODE: config.picnicCountryCode || 'NL',
+        PICNIC_SESSION_FILE: config.picnicSessionFile,
+        PICNIC_SAFE_CART_ONLY: config.picnicSafeCartOnly ? 'true' : 'false',
         ENABLE_HTTP_SERVER: config.enableHttpServer ? 'true' : 'false',
         HTTP_PORT: config.httpPort?.toString() || '3000',
         HTTP_HOST: config.httpHost || 'localhost'
